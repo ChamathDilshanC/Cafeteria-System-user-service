@@ -2,7 +2,7 @@ spring:
   application:
     name: user-service # Must match the filename in config-server/config/
   config:
-    import: "configserver:${CONFIG_SERVER_URI:http://localhost:8888}"
+    import: "configserver:${CONFIG_SERVER_URI:http://localhost:9000}"
   cloud:
     config:
       fail-fast: true
