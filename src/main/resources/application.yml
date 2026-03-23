@@ -1,9 +1,10 @@
 spring:
   application:
-    name: user-service # Must match the filename in config-server/config/
+    name: user-service
+
   config:
-    import: 'configserver:${CONFIG_SERVER_URI:http://config.platform:9000}'
+    import: "configserver:"
+
   cloud:
     config:
-      fail-fast: true
       uri: http://config.platform:9000
