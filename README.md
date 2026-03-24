@@ -5,7 +5,7 @@
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-4.0.3-brightgreen.svg)](https://spring.io/projects/spring-boot)
 [![Spring Cloud](https://img.shields.io/badge/Spring%20Cloud-2025.1.0-blue.svg)](https://spring.io/projects/spring-cloud)
 [![Java](https://img.shields.io/badge/Java-25-orange.svg)](https://openjdk.java.net/)
-[![MySQL](https://img.shields.io/badge/MySQL-8.0-blue.svg)](https://www.mysql.com/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-16-blue.svg)](https://www.postgresql.org/)
 
 ## 📋 Overview
 
@@ -32,7 +32,7 @@ The User Service handles all user-related operations including authentication, a
 | Spring Cloud Config Client         | 2025.1.0          | Centralized Configuration         |
 | Spring Cloud Netflix Eureka Client | 2025.1.0          | Service Discovery                 |
 | Spring Data JPA                    | 4.0.3             | Database Access Layer             |
-| MySQL                              | 8.0               | Relational Database               |
+| PostgreSQL                              | 8.0               | Relational Database               |
 | JJWT                               | 0.12.6            | JWT Token Generation & Validation |
 | BCrypt                             | (Spring Security) | Password Hashing                  |
 | Maven                              | 3.9+              | Build Tool                        |
@@ -43,7 +43,7 @@ The User Service handles all user-related operations including authentication, a
 | ----------------------- | ----------------------- |
 | **Service Name**        | `user-service`          |
 | **Port**                | `8081`                  |
-| **Database**            | MySQL                   |
+| **Database**            | PostgreSQL                   |
 | **Database Name**       | `cafeteria_users`       |
 | **Eureka Registration** | Yes                     |
 | **Config Server**       | `http://localhost:8888` |
@@ -67,7 +67,7 @@ CREATE TABLE users (
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
     INDEX idx_email (email),
     INDEX idx_role (role)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
+);
 ```
 
 ### User Roles
@@ -85,7 +85,7 @@ CREATE TABLE users (
 
 - Java 25
 - Maven 3.9+
-- MySQL 8.0
+- PostgreSQL 16
 - Port 8081 available
 - Config Server running on port 8888
 - Service Registry running on port 8761
@@ -94,11 +94,11 @@ CREATE TABLE users (
 
 ```bash
 # Create database
-mysql -u root -p
-CREATE DATABASE cafeteria_users CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+psql -U postgres
+CREATE DATABASE cafeteria_users;
 
 # Run initialization script (if provided)
-mysql -u root -p cafeteria_users < init-scripts/mysql/01_create_users_table.sql
+psql -U postgres -d cafeteria_users -f init-scripts/postgres/01_create_users_table.sql
 ```
 
 ### Build
@@ -138,10 +138,10 @@ eureka:
 ```yaml
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/cafeteria_users?useSSL=false&serverTimezone=UTC
-    username: ${DB_USERNAME:root}
-    password: ${DB_PASSWORD:root}
-    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:postgresql://localhost:5432/cafeteria_users?useSSL=false&serverTimezone=UTC
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:postgrespassword}
+    driver-class-name: org.postgresql.Driver
 
   jpa:
     hibernate:
@@ -149,7 +149,7 @@ spring:
     show-sql: true
     properties:
       hibernate:
-        dialect: org.hibernate.dialect.MySQL8Dialect
+        dialect: org.hibernate.dialect.PostgreSQL8Dialect
         format_sql: true
 
 # JWT Configuration
@@ -411,8 +411,8 @@ FROM eclipse-temurin:25-jdk-alpine
 WORKDIR /app
 COPY target/user-service-1.0.0.jar app.jar
 EXPOSE 8081
-ENV DB_HOST=mysql
-ENV DB_PORT=3306
+ENV DB_HOST=postgres
+ENV DB_PORT=5432
 ENV DB_NAME=cafeteria_users
 ENTRYPOINT ["java", "-jar", "app.jar"]
 ```
@@ -425,13 +425,13 @@ user-service:
   ports:
     - "8081:8081"
   depends_on:
-    - mysql
+    - postgres
     - config-server
     - service-registry
   environment:
-    - SPRING_DATASOURCE_URL=jdbc:mysql://mysql:3306/cafeteria_users
-    - SPRING_DATASOURCE_USERNAME=root
-    - SPRING_DATASOURCE_PASSWORD=root_password
+    - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres:5432/cafeteria_users
+    - SPRING_DATASOURCE_USERNAME=postgres
+    - SPRING_DATASOURCE_PASSWORD=postgrespassword
     - JWT_SECRET=${JWT_SECRET}
 ```
 
@@ -440,7 +440,7 @@ user-service:
 ### Environment Variables
 
 ```bash
-export SPRING_DATASOURCE_URL=jdbc:mysql://${DB_IP}:3306/cafeteria_users
+export SPRING_DATASOURCE_URL=jdbc:postgresql://${DB_IP}:5432/cafeteria_users
 export SPRING_DATASOURCE_USERNAME=${DB_USER}
 export SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
 export JWT_SECRET=${JWT_SECRET_256_BITS}
@@ -456,7 +456,7 @@ export EUREKA_CLIENT_SERVICE_URL_DEFAULTZONE=http://${EUREKA_IP}:8761/eureka/
   args: ['-jar', 'services/user-service/target/user-service-1.0.0.jar'],
   env: {
     SERVER_PORT: 8081,
-    SPRING_DATASOURCE_URL: 'jdbc:mysql://mysql-instance:3306/cafeteria_users',
+    SPRING_DATASOURCE_URL: 'jdbc:postgresql://postgres-instance:5432/cafeteria_users',
     JWT_SECRET: process.env.JWT_SECRET
   }
 }
@@ -512,8 +512,8 @@ curl http://localhost:8081/actuator/metrics/jvm.memory.used
 ### Database Connection Issues
 
 ```bash
-# Test MySQL connection
-mysql -h localhost -u root -p cafeteria_users
+# Test PostgreSQL connection
+psql -h localhost -U postgres -d cafeteria_users
 
 # Check service logs
 tail -f logs/user-service.log
@@ -555,7 +555,7 @@ jwt:
 
 ### Database Dependencies
 
-- **MySQL**: Primary data storage for user information
+- **PostgreSQL**: Primary data storage for user information
 
 ### Service Discovery
 
