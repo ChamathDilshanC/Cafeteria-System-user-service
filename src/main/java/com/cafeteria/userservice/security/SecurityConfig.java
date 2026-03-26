@@ -36,8 +36,11 @@ public class SecurityConfig {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .csrf(csrf -> csrf.disable())
-                // Enable CORS using the corsConfigurationSource bean below
-                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                // CORS is handled entirely by the API Gateway.
+                // Disabling it here prevents duplicate Access-Control-Allow-Origin headers.
+                // To re-enable (e.g. for local dev without a gateway), replace the line below
+                // with: .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .cors(cors -> cors.disable())
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Allow public auth, actuator, and all /api/** for development
@@ -50,13 +53,21 @@ public class SecurityConfig {
     }
 
     /**
-     * Permissive CORS policy for development.
-     * In production, replace the wildcard pattern with the actual frontend origin.
+     * Fallback CORS configuration – only active when cors() is re-enabled above.
+     *
+     * IMPORTANT: When allowCredentials is true you MUST NOT use a plain wildcard
+     * with setAllowedOrigins("*"). Instead use setAllowedOriginPatterns("*") (as
+     * done below) or list explicit origins, e.g. List.of("http://localhost:3000").
+     *
+     * In production, replace the pattern with the actual frontend origin:
+     *   configuration.setAllowedOriginPatterns(List.of("https://your-app.example.com"));
      */
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOriginPatterns(List.of("*")); // wildcard – safe for dev
+        // setAllowedOriginPatterns supports "*" even when allowCredentials = true;
+        // setAllowedOrigins("*") does NOT – it would throw an IllegalArgumentException.
+        configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
         configuration.setAllowCredentials(true);
