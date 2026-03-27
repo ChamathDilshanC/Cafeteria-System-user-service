@@ -32,7 +32,7 @@ The User Service handles all user-related operations including authentication, a
 | Spring Cloud Config Client         | 2025.1.0          | Centralized Configuration         |
 | Spring Cloud Netflix Eureka Client | 2025.1.0          | Service Discovery                 |
 | Spring Data JPA                    | 4.0.3             | Database Access Layer             |
-| PostgreSQL                              | 8.0               | Relational Database               |
+| PostgreSQL                         | 16                | Relational Database               |
 | JJWT                               | 0.12.6            | JWT Token Generation & Validation |
 | BCrypt                             | (Spring Security) | Password Hashing                  |
 | Maven                              | 3.9+              | Build Tool                        |
@@ -43,10 +43,10 @@ The User Service handles all user-related operations including authentication, a
 | ----------------------- | ----------------------- |
 | **Service Name**        | `user-service`          |
 | **Port**                | `8081`                  |
-| **Database**            | PostgreSQL                   |
+| **Database**            | PostgreSQL              |
 | **Database Name**       | `cafeteria_users`       |
 | **Eureka Registration** | Yes                     |
-| **Config Server**       | `http://localhost:8888` |
+| **Config Server**       | `http://localhost:9000` |
 
 ## 💾 Database Schema
 
@@ -87,7 +87,7 @@ CREATE TABLE users (
 - Maven 3.9+
 - PostgreSQL 16
 - Port 8081 available
-- Config Server running on port 8888
+- Config Server running on port 9000
 - Service Registry running on port 8761
 
 ### Database Setup
@@ -125,7 +125,7 @@ spring:
   application:
     name: user-service
   config:
-    import: optional:configserver:http://localhost:8888
+    import: optional:configserver:http://localhost:9000
 
 eureka:
   client:
@@ -423,7 +423,7 @@ ENTRYPOINT ["java", "-jar", "app.jar"]
 user-service:
   build: ./services/user-service
   ports:
-    - "8081:8081"
+    - '8081:8081'
   depends_on:
     - postgres
     - config-server
@@ -560,7 +560,7 @@ jwt:
 ### Service Discovery
 
 - **Registers with**: Eureka Service Registry (8761)
-- **Fetches config from**: Config Server (8888)
+- **Fetches config from**: Config Server (9000)
 
 ## 📄 License
 
